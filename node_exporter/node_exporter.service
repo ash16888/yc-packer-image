@@ -1,0 +1,30 @@
+[Unit]
+Description=node_exporter - Exporter for machine metrics.
+Documentation=https://github.com/prometheus/node_exporter
+After=docker.service
+
+[Service]
+ExecStart=/usr/bin/sudo docker run \
+  --rm \
+  --name node_exporter \
+  --network host \
+  --ipc private \
+  -m "200M" \
+  -c "200" \
+  -v "/proc:/host/proc:ro" \
+  -v "/sys:/host/sys:ro" \
+  -v "/:/rootfs:ro" \
+  -e "--path.procfs=/host/proc" \
+  -e "--path.sysfs=/host/sys" \
+  -e "--path.rootfs=/rootfs" \
+  -e "--collector.filesystem.ignored-mount-points='^/(sys|proc|dev|host|etc|rootfs/var/lib/docker/containers|rootfs/var/lib/docker/overlay2|rootfs/run/docker/netns|rootfs/var/lib/docker/aufs)($$|/)'" \
+  quay.io/prometheus/node-exporter:v1.4.1
+
+ExecReload=/bin/kill -HUP $MAINPID
+ExecStop=/usr/bin/sudo docker stop node_exporter
+ExecStop=/usr/bin/sudo docker rm -flv node_exporter
+
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
